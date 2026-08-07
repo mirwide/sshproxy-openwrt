@@ -89,10 +89,51 @@ PermitRootLogin yes   # при необходимости
 | `subnets` | Список подсетей, трафик к которым уходит в туннель |
 | `firewall` | `nft` / `iptables` / пусто (автоопределение) |
 
+## OpenWrt: init.d + пакет apk
+
+В каталоге `files/` — procd-сервис и UCI-конфиг. Команда `daemon` сама
+создаёт правила netfilter при старте и удаляет их при остановке
+(перехват SIGTERM/SIGINT), поэтому сервис полностью самоуправляем:
+
+```sh
+/etc/init.d/sshproxy enable
+/etc/init.d/sshproxy start      # правила созданы, прокси запущен
+/etc/init.d/sshproxy stop       # прокси остановлен, правила удалены
+```
+
+`/etc/config/sshproxy` содержит только путь к JSON-конфигу, все настройки
+живут в самом JSON-файле (`/etc/sshproxy/config.json` по умолчанию):
+
+```
+config sshproxy 'sshproxy'
+	option enabled '1'
+	option config '/etc/sshproxy/config.json'
+```
+
+`option enabled` — включить сервис (`1`/`0`), `option config` — путь к
+JSON-конфигу (формат описан в разделе «Конфигурация» выше). При старте
+сервис передаёт этот файл в `daemon`-режим.
+
+Сборка пакета:
+
+```sh
+# OpenWrt >= 25.12 (apk) — нужен apk-tools >= 3
+make riscv64-apk ARCH=riscv64_generic      # или arm64-apk / make apk ARCH=x86_64
+# OpenWrt < 25.12 (ipk)
+make riscv64-ipk                           # или arm64-ipk / make ipk ARCH=...
+
+# установка на устройстве
+apk add --allow-untrusted sshproxy-openwrt-0.1-r1_riscv64_generic.apk
+/etc/init.d/sshproxy enable && /etc/init.d/sshproxy start
+```
+
+Пакет зависит от `nftables`; при желании подписать apk передайте
+`APK_KEY=/path/to/key.rsa`.
+
 ## Замечания
 
 - Поддерживаются только IPv4-подсети.
 - Трафик к самому SSH-серверу исключается из редиректа (иначе — петля).
 - SSH-соединение пересоздаётся автоматически при разрыве.
 - На OpenWrt правила ставятся в `nat`-цепочки; прокси работает как сервис
-  (например, через procd/init.d).
+  через procd/init.d.

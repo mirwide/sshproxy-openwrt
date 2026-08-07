@@ -12,6 +12,7 @@ const usage = `sshproxy-openwrt — прозрачный SSH-прокси для
 Использование:
   sshproxy-openwrt <config.json> setup     установить правила пересылки (nftables/iptables)
   sshproxy-openwrt <config.json> run       запустить прокси
+  sshproxy-openwrt <config.json> daemon    создать правила, запустить прокси, удалить правила при выходе
   sshproxy-openwrt <config.json> teardown  удалить правила пересылки
 
 Конфигурация (JSON):
@@ -80,7 +81,12 @@ func main() {
 			log.Fatalf("run: %v", err)
 		}
 
+	case "daemon":
+		if err := runDaemon(cfg, backend); err != nil {
+			log.Fatalf("daemon: %v", err)
+		}
+
 	default:
-		log.Fatalf("unknown command %q (want setup, run or teardown)", command)
+		log.Fatalf("unknown command %q (want setup, run, daemon or teardown)", command)
 	}
 }
