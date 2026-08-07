@@ -1,6 +1,7 @@
 GO      ?= go
 VERSION ?= $(shell git describe --tags --always 2>/dev/null || echo dev)
 BUILD_DIR ?= bin
+GOFLAGS=-buildvcs=false
 
 # --- apk packaging (OpenWrt >= 25.12, apk-tools >= 3) ---
 #
@@ -36,9 +37,10 @@ APK_MKPKG      := $(APK) mkpkg \
 	--info "depends:nftables" \
 	$(if $(APK_KEY),--sign-key "$(APK_KEY)") \
 	--files "$(APK_DATA)" \
-	--output "$(APK_PATH)"
+	--output "$(APK_PATH)" \
+	--verbose --progress
 
-.PHONY: all build openwrt riscv64 arm64 \
+.PHONY: all build riscv64 arm64 \
         apk riscv64-apk arm64-apk apk-in-docker \
         test vet fmt install clean
 
@@ -47,7 +49,7 @@ all: build
 # Host build (for development).
 build:
 	mkdir -p $(BUILD_DIR)
-	$(GO) build -tags "$(GO_TAGS)" -trimpath \
+	 GOFLAGS=$(GOFLAGS) $(GO) build -tags "$(GO_TAGS)" -trimpath \
 		-ldflags "-s -w -X github.com/mirwide/sshproxy.version=$(VERSION) $(GO_EXTLDFLAGS)" \
 		-o $(BUILD_DIR)/sshproxy .
 
@@ -59,7 +61,7 @@ arm64:
 
 openwrt:
 	@test -n "$(GOARCH)" || (echo "GOARCH is required" && exit 1)
-	GOOS=linux GOARCH=$(GOARCH) GOMIPS=$(GOMIPS) \
+	GOOS=linux GOARCH=$(GOARCH) GOMIPS=$(GOMIPS) GOFLAGS=$(GOFLAGS) \
 		$(GO) build -tags "$(GO_TAGS)" -trimpath \
 		-ldflags "-s -w -X github.com/mirwide/sshproxy.version=$(VERSION) $(GO_EXTLDFLAGS)" \
 		-o $(BUILD_DIR)/sshproxy-$(GOARCH) .
@@ -134,13 +136,7 @@ $(APK_PATH): $(APK_FILES)
 		echo "  this target runs inside Docker; use 'make riscv64-apk' instead" >&2; \
 		exit 1; }; \
 	touch -h -d "@$(SOURCE_DATE_EPOCH)" $(APK_FILES) 2>/dev/null || true; \
-	if command -v fakeroot >/dev/null 2>&1; then \
-		echo "fakeroot: packaging files as root:root"; \
-		fakeroot sh -e -c 'chown -h 0:0 $(APK_FILES) 2>/dev/null; exec $(APK_MKPKG)'; \
-	else \
-		echo "note: fakeroot not found; package files will be owned by the build user" >&2; \
-		$(APK_MKPKG); \
-	fi
+	chown -h 0:0 $(APK_FILES); $(APK_MKPKG);
 
 # Internal target: package a prebuilt binary. Used by ci/build.sh inside the
 # image, where BINARY and APK point at the container's cross-built binary and

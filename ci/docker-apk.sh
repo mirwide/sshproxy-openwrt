@@ -29,7 +29,6 @@ docker build -t "$IMAGE" ci/
 mkdir -p "$CACHE_DIR"/go-build
 
 set -- --rm \
-	-u "$(id -u):$(id -g)" \
 	-e HOME=/tmp \
 	-e GOCACHE=/go-build \
 	-e ARCH="$ARCH" \

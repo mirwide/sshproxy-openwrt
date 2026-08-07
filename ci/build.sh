@@ -9,7 +9,7 @@
 set -e
 
 ARCH="${ARCH:-riscv64_generic}"
-APK=/opt/apk-tools/bin/apk
+APK="${APK:-apk}"
 
 case "$ARCH" in
 riscv64_generic)
