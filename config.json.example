@@ -1,0 +1,15 @@
+{
+  "ssh": {
+    "server": "vpn.example.com:22",
+    "user": "root",
+    "password": "secret",
+    "key_file": "/root/.ssh/id_rsa",
+    "ignore_host_key": false
+  },
+  "listen": "0.0.0.0:1080",
+  "subnets": [
+    "8.8.8.0/24",
+    "10.0.0.0/8"
+  ],
+  "firewall": "nft"
+}
