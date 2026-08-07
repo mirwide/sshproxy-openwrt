@@ -1,0 +1,22 @@
+{
+	"luci-app-sshproxy": {
+		"description": "Grant access to sshproxy procedures",
+		"read": {
+			"cgi-io": [ "exec", "read", "write" ],
+			"file": {
+				"/etc/sshproxy/config.json": [ "read", "write" ],
+				"/etc/init.d/sshproxy*": [ "exec" ],
+				"/bin/busybox*": [ "exec" ],
+				"/sbin/logread": [ "exec" ]
+			},
+			"uci": [ "sshproxy" ],
+			"ubus": {
+				"luci": [ "getInitList", "setInitAction" ],
+				"service": [ "list" ]
+			}
+		},
+		"write": {
+			"uci": [ "sshproxy" ]
+		}
+	}
+}

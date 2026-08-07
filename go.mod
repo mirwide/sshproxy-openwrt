@@ -1,4 +1,4 @@
-module github.com/mirwide/sshproxy-openwrt
+module github.com/mirwide/sshproxy
 
 go 1.26.5
 

@@ -1,18 +1,6 @@
 GO      ?= go
 VERSION ?= $(shell git describe --tags --always 2>/dev/null || echo dev)
 BUILD_DIR ?= bin
-LDFLAGS ?=          # extra linker flags (e.g. -static for a fully static binary)
-
-# When LDFLAGS contains -static the Go binary is linked statically too:
-# -extldflags=-static plus pure-Go net/user so no libc dependencies leak
-# into the final binary (needed on OpenWrt).
-ifneq ($(filter -static,$(LDFLAGS)),)
-GO_EXTLDFLAGS := -extldflags=-static
-GO_TAGS       := netgo,osusergo
-else
-GO_EXTLDFLAGS :=
-GO_TAGS       :=
-endif
 
 # --- apk packaging (OpenWrt >= 25.12, apk-tools >= 3) ---
 #
@@ -60,7 +48,7 @@ all: build
 build:
 	mkdir -p $(BUILD_DIR)
 	$(GO) build -tags "$(GO_TAGS)" -trimpath \
-		-ldflags "-s -w -X github.com/mirwide/sshproxy-openwrt.version=$(VERSION) $(GO_EXTLDFLAGS)" \
+		-ldflags "-s -w -X github.com/mirwide/sshproxy.version=$(VERSION) $(GO_EXTLDFLAGS)" \
 		-o $(BUILD_DIR)/sshproxy .
 
 riscv64:
@@ -68,6 +56,13 @@ riscv64:
 
 arm64:
 	$(MAKE) openwrt GOARCH=arm64
+
+openwrt:
+	@test -n "$(GOARCH)" || (echo "GOARCH is required" && exit 1)
+	GOOS=linux GOARCH=$(GOARCH) GOMIPS=$(GOMIPS) \
+		$(GO) build -tags "$(GO_TAGS)" -trimpath \
+		-ldflags "-s -w -X github.com/mirwide/sshproxy.version=$(VERSION) $(GO_EXTLDFLAGS)" \
+		-o $(BUILD_DIR)/sshproxy-$(GOARCH) .
 
 test:
 	$(GO) test ./...
@@ -79,7 +74,7 @@ fmt:
 	gofmt -l -w .
 
 install:
-	$(GO) install -trimpath -ldflags "-s -w -X github.com/mirwide/sshproxy-openwrt.version=$(VERSION)" .
+	$(GO) install -trimpath -ldflags "-s -w -X github.com/mirwide/sshproxy.version=$(VERSION)" .
 
 # --- public apk targets: run inside Docker ---
 apk:
@@ -92,7 +87,7 @@ arm64-apk:
 	sh ci/docker-apk.sh aarch64_generic $(if $(APK_KEY),APK_KEY=$(APK_KEY))
 
 # --- apk data payload (staged by ci/build.sh inside the image) ---
-$(APK_DATA)/usr/bin/sshproxy-openwrt: $(BINARY)
+$(APK_DATA)/usr/bin/sshproxy: $(BINARY)
 	@mkdir -p $(dir $@)
 	install -m 0755 $< $@
 
@@ -108,10 +103,30 @@ $(APK_DATA)/etc/sshproxy/config.json: files/etc/sshproxy/config.json
 	@mkdir -p $(dir $@)
 	install -m 0644 $< $@
 
-APK_FILES := $(APK_DATA)/usr/bin/sshproxy-openwrt \
+# --- LuCI app (luci-app-sshproxy) ---
+#
+# The LuCI interface is bundled into the same package so that a single
+# install gets both the service and its web UI. The files are inert when
+# luci-base is not installed, so headless installs are unaffected.
+LUCI_SRC := $(shell find luci-app-sshproxy/root luci-app-sshproxy/htdocs -type f 2>/dev/null)
+
+LUCI_DST_APK := $(patsubst luci-app-sshproxy/htdocs/%,$(APK_DATA)/www/%, \
+                $(patsubst luci-app-sshproxy/root/%,$(APK_DATA)/%, \
+                $(LUCI_SRC)))
+
+$(APK_DATA)/www/%: luci-app-sshproxy/htdocs/%
+	@mkdir -p $(dir $@)
+	install -m 0644 $< $@
+
+$(APK_DATA)/usr/%: luci-app-sshproxy/root/usr/%
+	@mkdir -p $(dir $@)
+	install -m 0644 $< $@
+
+APK_FILES := $(APK_DATA)/usr/bin/sshproxy \
              $(APK_DATA)/etc/init.d/sshproxy \
              $(APK_DATA)/etc/config/sshproxy \
-             $(APK_DATA)/etc/sshproxy/config.json
+             $(APK_DATA)/etc/sshproxy/config.json \
+             $(LUCI_DST_APK)
 
 $(APK_PATH): $(APK_FILES)
 	@$(APK) --version 2>/dev/null | grep -qE '^apk-tools [3-9]\.' || { \

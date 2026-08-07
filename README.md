@@ -130,6 +130,16 @@ apk add --allow-untrusted sshproxy-openwrt-0.1-r1_riscv64_generic.apk
 Пакет зависит от `nftables`; при желании подписать apk передайте
 `APK_KEY=/path/to/key.rsa`.
 
+## LuCI
+
+Интерфейс LuCI входит в тот же пакет (меню **Services → SSHProxy**):
+
+- **Service** — статус (автозапуск и демон), кнопки Enable/Disable/Start/Restart/Stop.
+- **Settings** — редактирование `/etc/sshproxy/config.json` (SSH, listen, подсети, firewall) с сохранением и перезапуском сервиса.
+- **Log Viewer** — журнал из syslog, отфильтрованный по `sshproxy`.
+
+При установке без `luci-base` файлы безвредны и не мешают headless-использованию.
+
 ## Замечания
 
 - Поддерживаются только IPv4-подсети.

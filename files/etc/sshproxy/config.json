@@ -20,5 +20,6 @@
     "91.108.20.0/22",
     "185.76.151.0/24"
   ],
-  "firewall": "nft"
+  "firewall": "nft",
+  "debug": false
 }

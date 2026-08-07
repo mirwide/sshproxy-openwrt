@@ -24,6 +24,16 @@ const soOriginalDst = 80
 // timeout — таймаут установки SSH-соединения.
 const timeout = 10 * time.Second
 
+// debugEnabled включает подробное логирование (см. debugf).
+var debugEnabled bool
+
+// debugf логирует сообщение только при включённой отладке.
+func debugf(format string, args ...interface{}) {
+	if debugEnabled {
+		log.Printf(format, args...)
+	}
+}
+
 // Proxy — прозрачный прокси поверх SSH.
 type Proxy struct {
 	cfg *Config
@@ -75,7 +85,7 @@ func (p *Proxy) handle(conn net.Conn) {
 		log.Printf("connection to proxy itself from %s ignored (dst=%s)", conn.RemoteAddr(), dst)
 		return
 	}
-	log.Printf("forward %s -> %s via %s", conn.RemoteAddr(), dst, p.cfg.SSH.Server)
+	debugf("forward %s -> %s via %s", conn.RemoteAddr(), dst, p.cfg.SSH.Server)
 
 	for attempt := 0; attempt < 2; attempt++ {
 		client, err := p.getClient()

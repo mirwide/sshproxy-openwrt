@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 #
-# sshproxy-openwrt - transparent SSH proxy: redirects traffic to subnets
+# sshproxy - transparent SSH proxy: redirects traffic to subnets
 # through an SSH tunnel. The daemon installs netfilter rules on start and
 # removes them on stop.
 #
@@ -13,7 +13,7 @@ STOP=10
 
 USE_PROCD=1
 
-PROG=/usr/bin/sshproxy-openwrt
+PROG=/usr/bin/sshproxy
 DEFAULT_CONFIG=/etc/sshproxy/config.json
 
 config_file() {

@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libssl-dev zlib1g-dev \
         meson ninja-build \
         fakeroot lua5.4 liblua5.4-dev \
+    && update-alternatives --install /usr/bin/faked faked /usr/bin/faked-sysv 10 \
     && rm -rf /var/lib/apt/lists/*
 
 # apk-tools 3.0.5 -- the exact commit OpenWrt 25.12 builds.

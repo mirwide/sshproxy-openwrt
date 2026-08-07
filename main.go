@@ -56,6 +56,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("config: %v", err)
 	}
+	debugEnabled = cfg.Debug
 
 	backend, err := detectBackend(cfg.Firewall)
 	if err != nil {

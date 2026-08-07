@@ -34,7 +34,7 @@ if [ -n "${APK_KEY:-}" ]; then
 fi
 
 make openwrt GOARCH="$GOARCH" LDFLAGS=-static
-make apk-in-docker BINARY=bin/sshproxy-openwrt-$GOARCH \
+make apk-in-docker BINARY=bin/sshproxy-$GOARCH \
 	ARCH="$ARCH" APK="$APK" $APK_KEY_ARG
 
 echo

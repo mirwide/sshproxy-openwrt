@@ -23,6 +23,9 @@ type Config struct {
 	// Firewall — тип генерируемых правил: "nft" или "iptables".
 	// Пустое значение = автоопределение по наличию бинарников.
 	Firewall string `json:"firewall,omitempty"`
+
+	// Debug — подробное логирование соединений.
+	Debug bool `json:"debug,omitempty"`
 }
 
 // SSHConfig — параметры SSH-соединения.
