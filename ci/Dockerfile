@@ -10,6 +10,7 @@ FROM golang:1.26-alpine
 
 RUN apk add --no-cache \
         apk-tools \
-        ca-certificates curl git make
+        ca-certificates curl git make \
+ && git config --system --add safe.directory '*'
 
 CMD ["/bin/sh"]

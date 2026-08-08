@@ -16,7 +16,7 @@ GOFLAGS=-buildvcs=false
 # ci/build.sh and is not meant to be run on the host.
 
 PKG_NAME       ?= sshproxy-openwrt
-PKG_VERSION    ?= 0.1
+PKG_VERSION    ?= $(patsubst v%,%,$(VERSION))
 PKG_RELEASE    ?= 1
 ARCH           ?= riscv64_generic
 APK_KEY        ?=          # path to RSA private key (PEM) to sign the package
